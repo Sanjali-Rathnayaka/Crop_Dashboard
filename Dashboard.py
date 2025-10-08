@@ -20,8 +20,9 @@ from reportlab.pdfgen import canvas
 st.set_page_config(page_title="Crop Recommendation Dashboard", layout="wide")
 st.title("🌾 Crop Recommendation & Scheduling Dashboard for Sri Lanka")
 
-data_path = r"C:\Users\Sanjali\Downloads\SriLanka_Crop.csv"
+data_path = "data/see-active-sites-01-sep-2019.csv"
 df = pd.read_csv(data_path)
+
 
 # --- Data Cleaning ---
 df = df.drop_duplicates()
@@ -181,3 +182,4 @@ st.download_button(
 )
 
 st.success("✅ Dashboard Loaded Successfully — Explore insights above!")
+
