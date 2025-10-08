@@ -19,7 +19,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # === Load Dataset ===
-data_path = r"C:\Users\Sanjali\Downloads\SriLanka_Crop.csv"
+data_path = "data/see-active-sites-01-sep-2019.csv"
 df = pd.read_csv(data_path)
 
 print("✅ Dataset Loaded Successfully!")
@@ -180,4 +180,5 @@ print("   → Confusion matrices for each model")
 print("   → Model_Accuracy_Comparison.png")
 print("   → Feature_Importance_RF.png")
 print("   → Elbow_Method.png")
+
 print("   → KMeans_Clusters.png")
