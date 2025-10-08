@@ -2,6 +2,7 @@
 # 🌾 Crop Recommendation & Scheduling Dashboard for Sri Lanka
 # ==============================================================
 
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -14,24 +15,39 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
 # ==============================================================
-# 1️⃣ LOAD DATA
+# 1️⃣ PAGE CONFIG
 # ==============================================================
 
 st.set_page_config(page_title="Crop Recommendation Dashboard", layout="wide")
 st.title("🌾 Crop Recommendation & Scheduling Dashboard for Sri Lanka")
-#Relative path for CSV in your repo
+
+# ==============================================================
+# 2️⃣ LOAD DATA
+# ==============================================================
+
 local_path = "data/see-active-sites-01-sep-2019.csv"
+remote_url = "https://raw.githubusercontent.com/your-username/crop_dashboard/main/data/see-active-sites-01-sep-2019.csv"
 
-# Function to load CSV
 def load_data():
-    if os.path.exists(local_path):
-        st.info("Loading dataset from local repository...")
-        return pd.read_csv(local_path)
-    else:
-        st.warning("Local dataset not found. Loading from GitHub...")
-        return pd.read_csv(remote_url)
+    try:
+        if os.path.exists(local_path):
+            st.info("Loading dataset from local repository...")
+            return pd.read_csv(local_path)
+        else:
+            st.warning("Local dataset not found. Loading from GitHub...")
+            return pd.read_csv(remote_url)
+    except Exception as e:
+        st.error(f"Failed to load dataset: {e}")
+        return None
 
-# --- Data Cleaning ---
+df = load_data()
+if df is None:
+    st.stop()  # Stop app if CSV cannot be loaded
+
+# ==============================================================
+# 3️⃣ DATA CLEANING
+# ==============================================================
+
 df = df.drop_duplicates()
 for col in df.columns:
     if df[col].dtype == 'object':
@@ -39,12 +55,12 @@ for col in df.columns:
     else:
         df[col].fillna(df[col].mean(), inplace=True)
 
-# --- Label Encode Target ---
+# Encode target crop
 le_crop = LabelEncoder()
 df["Suitable_Crop_Label"] = le_crop.fit_transform(df["Suitable_Crop"])
 
 # ==============================================================
-# 2️⃣ MODEL TRAINING
+# 4️⃣ MODEL TRAINING
 # ==============================================================
 
 feature_cols = [
@@ -62,7 +78,7 @@ rf_model = RandomForestClassifier(random_state=42)
 rf_model.fit(X_train, y_train)
 
 # ==============================================================
-# 3️⃣ HEADER / OVERVIEW METRICS
+# 5️⃣ OVERVIEW METRICS
 # ==============================================================
 
 st.markdown("### 📊 Overview Metrics")
@@ -71,17 +87,16 @@ col1.metric("🌍 Provinces Analyzed", df["Region"].nunique())
 col2.metric("🌾 Unique Crops", df["Suitable_Crop"].nunique())
 
 # ==============================================================
-# 4️⃣ CROP RECOMMENDATION PANEL
+# 6️⃣ CROP RECOMMENDATION PANEL
 # ==============================================================
 
 st.markdown("### 🌾 Crop Recommendation Panel")
 district = st.selectbox("Select a District / Region", sorted(df["Region"].unique()))
 
-# Filter dataset for selected region
 region_df = df[df["Region"] == district].copy()
 selected_data = region_df.iloc[0]
 
-# --- Predict (simulate recommendation) ---
+# Predict crop
 input_features = np.array(selected_data[feature_cols]).reshape(1, -1)
 pred_crop_label = rf_model.predict(input_features)[0]
 pred_crop = le_crop.inverse_transform([pred_crop_label])[0]
@@ -93,13 +108,13 @@ st.write(f"💧 Annual Rainfall: {selected_data['Annual_Rainfall_mm']} mm")
 st.write(f"🧪 Soil pH: {selected_data['Soil_pH']}")
 
 # ==============================================================
-# 5️⃣ CLIMATE AND SOIL INSIGHTS (Region-Specific)
+# 7️⃣ CLIMATE & SOIL INSIGHTS
 # ==============================================================
 
 st.markdown("### 🌤️ Climate and Soil Insights")
 colA, colB = st.columns(2)
 
-# --- Average Rainfall by Planting Month ---
+# Average Rainfall by Planting Month
 rainfall_chart = px.bar(
     region_df.groupby("Best_Planting_Month")["Annual_Rainfall_mm"].mean().reset_index(),
     x="Best_Planting_Month",
@@ -109,7 +124,7 @@ rainfall_chart = px.bar(
 )
 colA.plotly_chart(rainfall_chart, use_container_width=True)
 
-# --- Soil pH Distribution by Crop ---
+# Soil pH Distribution
 soil_chart = px.box(
     region_df,
     x="Suitable_Crop",
@@ -120,7 +135,7 @@ soil_chart = px.box(
 soil_chart.update_layout(xaxis_title="Crop Type", yaxis_title="Soil pH", showlegend=False)
 colB.plotly_chart(soil_chart, use_container_width=True)
 
-# --- Temperature vs Yield (Scatter, clearer) ---
+# Temperature vs Yield Scatter
 temp_yield_chart = px.scatter(
     region_df,
     x="Avg_Temp_C",
@@ -134,7 +149,7 @@ temp_yield_chart = px.scatter(
 colB.plotly_chart(temp_yield_chart, use_container_width=True)
 
 # ==============================================================
-# 6️⃣ PLANTING CALENDAR (Region-Specific)
+# 8️⃣ PLANTING CALENDAR
 # ==============================================================
 
 st.markdown("### 🗓️ Planting Calendar View")
@@ -151,7 +166,7 @@ calendar_fig = px.density_heatmap(
 st.plotly_chart(calendar_fig, use_container_width=True)
 
 # ==============================================================
-# 7️⃣ DOWNLOAD & EXPORT SECTION (PDF)
+# 9️⃣ PDF REPORT DOWNLOAD
 # ==============================================================
 
 st.markdown("### 📥 Download Recommendation Report (PDF)")
@@ -189,5 +204,4 @@ st.download_button(
 )
 
 st.success("✅ Dashboard Loaded Successfully — Explore insights above!")
-
 
