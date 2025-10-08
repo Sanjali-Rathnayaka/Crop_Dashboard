@@ -19,10 +19,17 @@ from reportlab.pdfgen import canvas
 
 st.set_page_config(page_title="Crop Recommendation Dashboard", layout="wide")
 st.title("🌾 Crop Recommendation & Scheduling Dashboard for Sri Lanka")
+#Relative path for CSV in your repo
+local_path = "data/see-active-sites-01-sep-2019.csv"
 
-data_path = "data/see-active-sites-01-sep-2019.csv"
-df = pd.read_csv(data_path)
-
+# Function to load CSV
+def load_data():
+    if os.path.exists(local_path):
+        st.info("Loading dataset from local repository...")
+        return pd.read_csv(local_path)
+    else:
+        st.warning("Local dataset not found. Loading from GitHub...")
+        return pd.read_csv(remote_url)
 
 # --- Data Cleaning ---
 df = df.drop_duplicates()
@@ -182,4 +189,5 @@ st.download_button(
 )
 
 st.success("✅ Dashboard Loaded Successfully — Explore insights above!")
+
 
