@@ -18,9 +18,19 @@ from sklearn.cluster import KMeans
 import warnings
 warnings.filterwarnings("ignore")
 
-# === Load Dataset ===
-data_path = "data/see-active-sites-01-sep-2019.csv"
-df = pd.read_csv(data_path)
+#  Relative path for CSV in your repo
+local_path = "data/see-active-sites-01-sep-2019.csv"
+
+
+
+# Function to load CSV
+def load_data():
+    if os.path.exists(local_path):
+        st.info("Loading dataset from local repository...")
+        return pd.read_csv(local_path)
+    else:
+        st.warning("Local dataset not found. Loading from GitHub...")
+        return pd.read_csv(remote_url)
 
 print("✅ Dataset Loaded Successfully!")
 print("Shape:", df.shape)
@@ -182,3 +192,4 @@ print("   → Feature_Importance_RF.png")
 print("   → Elbow_Method.png")
 
 print("   → KMeans_Clusters.png")
+
